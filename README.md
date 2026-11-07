@@ -1,1 +1,494 @@
-# Keyboards
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日文 50 音虛擬鍵盤 (50-Kana Virtual Keyboard)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter & Noto Sans JP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans JP', 'sans-serif'],
+                    },
+                    colors: {
+                        kana: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            200: '#bae0fd',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 避免按鈕快速連擊時產生選取文字效果 */
+        button {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* 自訂滾動條 */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col items-center p-3 sm:p-6">
+
+    <div class="w-full max-w-4xl flex flex-col gap-4 sm:gap-6">
+        
+        <!-- 頁頭標題區 -->
+        <header class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
+                    <span>🇯🇵</span> 日文 50 音鍵盤
+                </h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">點擊下方音節輸入，可自由切換平/片假名與濁音/拗音</p>
+            </div>
+            
+            <!-- 平假名 / 片假名 切換開關 -->
+            <div class="flex items-center bg-slate-100 p-1 rounded-xl w-full sm:w-auto justify-center">
+                <button id="btn-hiragana" onclick="setScriptMode('hiragana')" 
+                    class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-sm bg-white text-blue-600">
+                    あ 平假名
+                </button>
+                <button id="btn-katakana" onclick="setScriptMode('katakana')" 
+                    class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900">
+                    ア 片假名
+                </button>
+            </div>
+        </header>
+
+        <!-- 輸入與操作區 -->
+        <section class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-3">
+            <div class="relative">
+                <textarea id="output-text" rows="3" 
+                    placeholder="點擊下方鍵盤開始輸入日文..."
+                    class="w-full p-3 sm:p-4 text-lg sm:text-2xl border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none transition-all duration-150"></textarea>
+            </div>
+            
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <button onclick="clearText()" 
+                        class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        清空
+                    </button>
+                    <button onclick="backspaceText()" 
+                        class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 hover:bg-amber-50 hover:text-amber-600 rounded-lg transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414-6.414a2 2 0 011.414-.586H19a2 2 0 012 2v12a2 2 0 01-2 2H10.828a2 2 0 01-1.414-.586L3 12z"></path></svg>
+                        退格
+                    </button>
+                    <button onclick="insertSpace()" 
+                        class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                        空格
+                    </button>
+                </div>
+                
+                <!-- 複製按鈕 -->
+                <button onclick="copyToClipboard()" 
+                    class="px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 rounded-xl shadow-md shadow-blue-500/20 transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    複製內容
+                </button>
+            </div>
+        </section>
+
+        <!-- 鍵盤分類 Tab 頁籤 -->
+        <div class="flex border-b border-slate-200 space-x-2 sm:space-x-4">
+            <button id="tab-seion" onclick="setCategory('seion')" 
+                class="pb-3 px-3 text-sm sm:text-base font-bold text-blue-600 border-b-2 border-blue-600 transition-all">
+                清音 (五十音)
+            </button>
+            <button id="tab-dakuon" onclick="setCategory('dakuon')" 
+                class="pb-3 px-3 text-sm sm:text-base font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-800 transition-all">
+                濁音 / 半濁音
+            </button>
+            <button id="tab-youon" onclick="setCategory('youon')" 
+                class="pb-3 px-3 text-sm sm:text-base font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-800 transition-all">
+                拗音
+            </button>
+            <button id="tab-sokuon" onclick="setCategory('sokuon')" 
+                class="pb-3 px-3 text-sm sm:text-base font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-800 transition-all">
+                促音 / 標點
+            </button>
+        </div>
+
+        <!-- 虛擬鍵盤主體區 -->
+        <main class="bg-white p-3 sm:p-6 rounded-2xl shadow-sm border border-slate-100 min-h-[340px] flex justify-center items-center">
+            <div id="keyboard-container" class="w-full">
+                <!-- 動態由 JavaScript 生成鍵盤內容 -->
+            </div>
+        </main>
+        
+    </div>
+
+    <!-- Toast 複製成功提示容器 -->
+    <div id="toast" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700 z-50">
+        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toast-message" class="text-sm font-medium">已複製到剪貼簿！</span>
+    </div>
+
+    <script>
+        // --- 50 音資料庫設定 ---
+        const KANA_DATA = {
+            seion: {
+                // 5行10列 (あ段, い段, う段, え段, お段)
+                hiragana: [
+                    ['あ', 'い', 'う', 'え', 'お'],
+                    ['か', 'き', 'く', 'け', 'こ'],
+                    ['さ', 'し', 'す', 'せ', 'そ'],
+                    ['た', 'ち', 'つ', 'て', 'と'],
+                    ['な', 'に', 'ぬ', 'ね', 'の'],
+                    ['は', 'ひ', 'ふ', 'へ', 'ほ'],
+                    ['ま', 'み', 'む', 'め', 'も'],
+                    ['や', '',   'ゆ', '',   'よ'],
+                    ['ら', 'り', 'る', 'れ', 'ろ'],
+                    ['わ', 'を', 'ん', '',   '']
+                ],
+                katakana: [
+                    ['ア', 'イ', 'ウ', 'エ', 'オ'],
+                    ['カ', 'キ', 'ク', 'ケ', 'コ'],
+                    ['サ', 'シ', 'ス', 'セ', 'ソ'],
+                    ['タ', 'チ', 'ツ', 'テ', 'ト'],
+                    ['ナ', 'ニ', 'ヌ', 'ネ', 'ノ'],
+                    ['ハ', 'ヒ', 'フ', 'ヘ', 'ホ'],
+                    ['マ', 'ミ', 'ム', 'メ', 'モ'],
+                    ['ヤ', '',   'ユ', '',   'ヨ'],
+                    ['ラ', 'リ', 'ル', 'レ', 'ロ'],
+                    ['ワ', 'ヲ', 'ン', '',   '']
+                ],
+                romaji: [
+                    ['a', 'i', 'u', 'e', 'o'],
+                    ['ka', 'ki', 'ku', 'ke', 'ko'],
+                    ['sa', 'shi', 'su', 'se', 'so'],
+                    ['ta', 'chi', 'tsu', 'te', 'to'],
+                    ['na', 'ni', 'nu', 'ne', 'no'],
+                    ['ha', 'hi', 'fu', 'he', 'ho'],
+                    ['ma', 'mi', 'mu', 'me', 'mo'],
+                    ['ya', '',   'yu', '',   'yo'],
+                    ['ra', 'ri', 'ru', 're', 'ro'],
+                    ['wa', 'wo', 'n',  '',   '']
+                ]
+            },
+            dakuon: {
+                hiragana: [
+                    ['が', 'ぎ', 'ぐ', 'げ', 'ご'],
+                    ['ざ', 'じ', 'ず', 'ぜ', 'ぞ'],
+                    ['だ', 'ぢ', 'づ', 'で', 'ど'],
+                    ['ば', 'び', 'ぶ', 'べ', 'ぼ'],
+                    ['ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ']
+                ],
+                katakana: [
+                    ['ガ', 'ギ', 'グ', 'ゲ', 'ゴ'],
+                    ['ザ', 'ジ', 'ズ', 'ゼ', 'ゾ'],
+                    ['ダ', 'ヂ', 'ヅ', 'デ', 'ド'],
+                    ['バ', 'ビ', 'ブ', 'ベ', 'ボ'],
+                    ['パ', 'ピ', 'プ', 'ペ', 'ポ']
+                ],
+                romaji: [
+                    ['ga', 'gi', 'gu', 'ge', 'go'],
+                    ['za', 'ji', 'zu', 'ze', 'zo'],
+                    ['da', 'ji', 'zu', 'de', 'do'],
+                    ['ba', 'bi', 'bu', 'be', 'bo'],
+                    ['pa', 'pi', 'pu', 'pe', 'po']
+                ]
+            },
+            youon: {
+                hiragana: [
+                    ['きゃ', 'きゅ', 'きょ'], ['しゃ', 'しゅ', 'しょ'],
+                    ['ちゃ', 'ちゅ', 'ちょ'], ['にゃ', 'にゅ', 'にょ'],
+                    ['ひゃ', 'ひゅ', 'ひょ'], ['みゃ', 'みゅ', 'みょ'],
+                    ['りゃ', 'りゅ', 'りょ'], ['ぎゃ', 'ぎゅ', 'ぎょ'],
+                    ['じゃ', 'じゅ', 'じょ'], ['びゃ', 'びゅ', 'びょ'],
+                    ['ぴゃ', 'ぴゅ', 'ぴょ']
+                ],
+                katakana: [
+                    ['キャ', 'キュ', 'キョ'], ['シャ', 'シュ', 'ショ'],
+                    ['チャ', 'チュ', 'チョ'], ['ニャ', 'ニュ', 'ニョ'],
+                    ['ヒャ', 'ヒュ', 'ヒョ'], ['ミャ', 'ミュ', 'ミョ'],
+                    ['リャ', 'リュ', 'リョ'], ['ギャ', 'ギュ', 'ギョ'],
+                    ['ジャ', 'ジュ', 'ジョ'], ['ビャ', 'ビュ', 'ビョ'],
+                    ['ピャ', 'ピュ', 'ピョ']
+                ],
+                romaji: [
+                    ['kya', 'kyu', 'kyo'], ['sha', 'shu', 'sho'],
+                    ['cha', 'chu', 'cho'], ['nya', 'nyu', 'nyo'],
+                    ['hya', 'hyu', 'hyo'], ['mya', 'myu', 'myo'],
+                    ['rya', 'ryu', 'ryo'], ['gya', 'gyu', 'gyo'],
+                    ['ja', 'ju', 'jo'], ['bya', 'byu', 'byo'],
+                    ['pya', 'pyu', 'pyo']
+                ]
+            },
+            sokuon: {
+                hiragana: [
+                    ['っ', 'ぁ', 'ぃ', 'ぅ', 'ぇ', 'ぉ'],
+                    ['ゃ', 'ゅ', 'ょ', 'ゎ', 'ー', '～'],
+                    ['一', '二', '三', '四', '五', '六'],
+                    ['七', '八', '九', '十', '百', '千'],
+                    ['！', '？', '「', '」', '（', '）'],
+                    ['、', '。', '・', '￥', '♪', '★']
+                ],
+                katakana: [
+                    ['ッ', 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ'],
+                    ['ャ', 'ュ', 'ョ', 'ヮ', 'ー', '～'],
+                    ['一', '二', '三', '四', '五', '六'],
+                    ['七', '八', '九', '十', '百', '千'],
+                    ['！', '？', '「', '」', '（', '）'],
+                    ['、', '。', '・', '￥', '♪', '★']
+                ],
+                romaji: [
+                    ['xtsu', 'xa', 'xi', 'xu', 'xe', 'xo'],
+                    ['xya', 'xyu', 'xyo', 'xwa', '-', '~'],
+                    ['1', '2', '3', '4', '5', '6'],
+                    ['7', '8', '9', '10', '100', '1000'],
+                    ['!', '?', '「', '」', '(', ')'],
+                    [',', '.', '•', '¥', '♪', '★']
+                ]
+            }
+        };
+
+        // 目前狀態
+        let currentScript = 'hiragana'; // 'hiragana' | 'katakana'
+        let currentCategory = 'seion';   // 'seion' | 'dakuon' | 'youon' | 'sokuon'
+
+        // 頁面初始化
+        window.onload = function() {
+            renderKeyboard();
+        };
+
+        // 設定假名模式 (平假名 / 片假名)
+        function setScriptMode(mode) {
+            currentScript = mode;
+            
+            const btnHira = document.getElementById('btn-hiragana');
+            const btnKata = document.getElementById('btn-katakana');
+            
+            if (mode === 'hiragana') {
+                btnHira.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-sm bg-white text-blue-600";
+                btnKata.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900";
+            } else {
+                btnKata.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-sm bg-white text-blue-600";
+                btnHira.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900";
+            }
+            renderKeyboard();
+        }
+
+        // 設定分類 Tab
+        function setCategory(cat) {
+            currentCategory = cat;
+            const tabs = ['seion', 'dakuon', 'youon', 'sokuon'];
+            
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if (t === cat) {
+                    el.className = "pb-3 px-3 text-sm sm:text-base font-bold text-blue-600 border-b-2 border-blue-600 transition-all";
+                } else {
+                    el.className = "pb-3 px-3 text-sm sm:text-base font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-800 transition-all";
+                }
+            });
+            
+            renderKeyboard();
+        }
+
+        // 渲染虛擬鍵盤
+        function renderKeyboard() {
+            const container = document.getElementById('keyboard-container');
+            container.innerHTML = '';
+
+            const kanaList = KANA_DATA[currentCategory][currentScript];
+            const romajiList = KANA_DATA[currentCategory].romaji;
+
+            if (currentCategory === 'seion') {
+                // 50 音採用經典 5x10 / 10x5 網格佈局
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-2.5 max-w-3xl mx-auto";
+
+                // 我們將 10 行轉換成欄位優化的按鈕
+                for (let col = 0; col < 10; col++) {
+                    const colDiv = document.createElement('div');
+                    colDiv.className = "flex flex-col gap-1.5 sm:gap-2.5";
+                    
+                    for (let row = 0; row < 5; row++) {
+                        const char = kanaList[col][row];
+                        const romaji = romajiList[col][row];
+                        colDiv.appendChild(createKeyButton(char, romaji));
+                    }
+                    grid.appendChild(colDiv);
+                }
+                container.appendChild(grid);
+            } 
+            else if (currentCategory === 'dakuon') {
+                // 濁音 5 行
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-5 gap-1.5 sm:gap-2.5 max-w-xl mx-auto";
+
+                for (let col = 0; col < 5; col++) {
+                    const colDiv = document.createElement('div');
+                    colDiv.className = "flex flex-col gap-1.5 sm:gap-2.5";
+                    
+                    for (let row = 0; row < 5; row++) {
+                        const char = kanaList[col][row];
+                        const romaji = romajiList[col][row];
+                        colDiv.appendChild(createKeyButton(char, romaji));
+                    }
+                    grid.appendChild(colDiv);
+                }
+                container.appendChild(grid);
+            } 
+            else if (currentCategory === 'youon') {
+                // 拗音 3 行組合
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-w-2xl mx-auto";
+
+                for (let group = 0; group < kanaList.length; group++) {
+                    for (let i = 0; i < kanaList[group].length; i++) {
+                        const char = kanaList[group][i];
+                        const romaji = romajiList[group][i];
+                        grid.appendChild(createKeyButton(char, romaji, true));
+                    }
+                }
+                container.appendChild(grid);
+            }
+            else if (currentCategory === 'sokuon') {
+                // 促音與常用符號
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-6 gap-2 max-w-xl mx-auto";
+
+                for (let row = 0; row < kanaList.length; row++) {
+                    for (let col = 0; col < kanaList[row].length; col++) {
+                        const char = kanaList[row][col];
+                        const romaji = romajiList[row][col];
+                        grid.appendChild(createKeyButton(char, romaji));
+                    }
+                }
+                container.appendChild(grid);
+            }
+        }
+
+        // 建立單個按鈕元件
+        function createKeyButton(char, romaji, isWide = false) {
+            if (!char) {
+                // 空白占位格
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "h-12 sm:h-14 rounded-xl bg-slate-50/50 border border-transparent";
+                return emptyCell;
+            }
+
+            const btn = document.createElement('button');
+            btn.onclick = () => appendChar(char);
+            btn.className = `group relative flex flex-col items-center justify-center h-12 sm:h-14 bg-white border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 active:bg-blue-100 active:scale-95 rounded-xl shadow-xs transition-all duration-100 ${isWide ? 'px-2' : ''}`;
+
+            const charSpan = document.createElement('span');
+            charSpan.className = "text-base sm:text-xl font-medium text-slate-800 group-hover:text-blue-600 transition-colors";
+            charSpan.innerText = char;
+
+            const romajiSpan = document.createElement('span');
+            romajiSpan.className = "text-[9px] sm:text-[10px] text-slate-400 font-mono -mt-0.5 group-hover:text-blue-400 transition-colors";
+            romajiSpan.innerText = romaji || '';
+
+            btn.appendChild(charSpan);
+            if (romaji) btn.appendChild(romajiSpan);
+
+            return btn;
+        }
+
+        // 輸入控制邏輯
+        const textarea = document.getElementById('output-text');
+
+        function appendChar(char) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+
+            textarea.value = text.substring(0, start) + char + text.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + char.length;
+            textarea.focus();
+        }
+
+        function clearText() {
+            textarea.value = '';
+            textarea.focus();
+        }
+
+        function backspaceText() {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+
+            if (start === end && start > 0) {
+                textarea.value = text.substring(0, start - 1) + text.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start - 1;
+            } else if (start !== end) {
+                textarea.value = text.substring(0, start) + text.substring(end);
+                textarea.selectionStart = textarea.selectionEnd = start;
+            }
+            textarea.focus();
+        }
+
+        function insertSpace() {
+            appendChar(' ');
+        }
+
+        // 一鍵複製與 Toast 提示
+        function copyToClipboard() {
+            const text = textarea.value;
+            if (!text) {
+                showToast("輸入框內沒有內容可複製！", false);
+                return;
+            }
+
+            // 使用相容性良好的 execCommand fallback 機制
+            try {
+                textarea.select();
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast("已成功複製到剪貼簿！", true);
+                } else {
+                    throw new Error("Copy command failed");
+                }
+            } catch (err) {
+                showToast("複製失敗，請手動複製", false);
+            }
+        }
+
+        // 顯示 Toast 訊息
+        let toastTimeout;
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+
+            toastMsg.innerText = message;
+            
+            // 替換圖示與顏色
+            if (isSuccess) {
+                toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 pointer-events-none bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-slate-700 z-50";
+            } else {
+                toast.className = "fixed bottom-6 right-6 transform translate-y-0 opacity-100 transition-all duration-300 pointer-events-none bg-rose-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 border border-rose-700 z-50";
+            }
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.className = toast.className.replace('translate-y-0 opacity-100', 'translate-y-20 opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
